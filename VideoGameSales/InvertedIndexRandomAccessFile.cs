@@ -24,9 +24,7 @@ namespace VideoGameSales
                 return null;
             }
 
-            var offset = GetPosition(position);
-
-            file.Seek(offset, SeekOrigin.Begin);
+            SeekFromBegin(position);
 
             var record = new InvertedIndex
             {
@@ -39,8 +37,7 @@ namespace VideoGameSales
 
         public override void Write(int position, InvertedIndex record)
         {
-            file.Seek(position, SeekOrigin.Begin);
-
+            SeekFromBegin(position);
             WriteString(record.Word, SizeOf.String);
             WriteString(string.Join(',', record.Records), RecordListStringSize);
         }

@@ -18,7 +18,7 @@ namespace VideoGameSales
         private int currentPosition = 0;
 
         private readonly int recordSize;
-        protected readonly FileStream file;
+        private readonly FileStream file;
         protected readonly BinaryReader reader;
         protected readonly BinaryWriter writer;
 
@@ -64,6 +64,12 @@ namespace VideoGameSales
             return position * recordSize + HeadSize;
         }
 
+        protected void SeekFromBegin(int position)
+        {
+            int offset = GetPosition(position);
+            file.Seek(offset, SeekOrigin.Begin);
+        }
+
         protected string ReadString(int limit)
         {
             string str = reader.ReadString();
@@ -98,9 +104,7 @@ namespace VideoGameSales
 
         public void Append(T record)
         {
-            // Getting end position
-            var position = GetPosition(TotalRecords);
-            Write(position, record);
+            Write(TotalRecords, record);
             file.Seek(0, SeekOrigin.Begin);
             writer.Write(++TotalRecords);
         }

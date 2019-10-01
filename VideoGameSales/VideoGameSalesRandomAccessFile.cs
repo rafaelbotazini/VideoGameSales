@@ -20,30 +20,27 @@ namespace VideoGameSales
                 return null;
             }
 
-            var offset = GetPosition(position);
+            SeekFromBegin(position);
 
-            file.Seek(offset, SeekOrigin.Begin);
+            var record = new VideoGameSalesRecord();
 
-            var record = new VideoGameSalesRecord
-            {
-                Rank = reader.ReadInt32(),
-                Name = ReadString(SizeOf.String),
-                Genre = ReadString(SizeOf.String),
-                Platform = ReadString(SizeOf.String),
-                Publisher = ReadString(SizeOf.String),
-                Year = reader.ReadInt32(),
-                NASales = reader.ReadDouble(),
-                JPSales = reader.ReadDouble(),
-                EUSales = reader.ReadDouble(),
-                GlobalSales = reader.ReadDouble(),
-            };
+            record.Rank = reader.ReadInt32();
+            record.Name = ReadString(SizeOf.String);
+            record.Genre = ReadString(SizeOf.String);
+            record.Platform = ReadString(SizeOf.String);
+            record.Publisher = ReadString(SizeOf.String);
+            record.Year = reader.ReadInt32();
+            record.NASales = reader.ReadDouble();
+            record.JPSales = reader.ReadDouble();
+            record.EUSales = reader.ReadDouble();
+            record.GlobalSales = reader.ReadDouble();
 
             return record;
         }
 
         public override void Write(int position, VideoGameSalesRecord record)
         {
-            file.Seek(position, SeekOrigin.Begin);
+            SeekFromBegin(position);
 
             writer.Write(record.Rank);
 
