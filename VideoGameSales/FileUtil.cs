@@ -6,6 +6,13 @@ namespace VideoGameSales
 {
     public class FileUtil
     {
+
+        /// <summary>
+        /// Creates a new binary file from a csv file.
+        /// Any exisiting output file with the same name will be overwritten.
+        /// </summary>
+        /// <param name="path">Path to csv file</param>
+        /// <param name="output">Path to output binary file</param>
         public static void GenerateVideoGameSalesBinaryFile(string path, string output)
         {
             using (var file = File.Open(path, FileMode.Open))
@@ -59,6 +66,10 @@ namespace VideoGameSales
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// Removes a file from disk.
+        /// </summary>
+        /// <param name="path">Path to the file</param>
         public static void Delete(string path)
         {
             var info = new FileInfo(path);
@@ -68,6 +79,11 @@ namespace VideoGameSales
             }
         }
 
+        /// <summary>
+        /// Utility method to split a csv line into an array of strings.
+        /// </summary>
+        /// <param name="line">CSV line</param>
+        /// <returns></returns>
         static string[] SplitLine(string line)
         {
             var data = line.Split(',');
@@ -78,6 +94,7 @@ namespace VideoGameSales
             {
                 int lastIndex = result.Count - 1;
 
+                // Merge and restore double quote escaped parts
                 if (result.Count > 0 && result[lastIndex].StartsWith('"') && part.EndsWith('"'))
                 {
                     result.Add((result[lastIndex] + "," + part).Replace("\"", ""));

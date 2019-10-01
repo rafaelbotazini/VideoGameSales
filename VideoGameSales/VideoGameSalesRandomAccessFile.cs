@@ -6,6 +6,12 @@ namespace VideoGameSales
     {
         private VideoGameSalesRandomAccessFile(string path, int recordSize) : base(path, recordSize) { }
 
+        /// <summary>
+        /// Opens a random access file with VideoGameSalesRecord records.
+        /// If the file does not exist. It will be created.
+        /// </summary>
+        /// <param name="path">Path to the binary file</param>
+        /// <returns></returns>
         public static VideoGameSalesRandomAccessFile Open(string path)
         {
             var recordSize = (SizeOf.Int32 * 2) + (SizeOf.String * 4) + (SizeOf.Double * 5);
@@ -13,6 +19,12 @@ namespace VideoGameSales
             return randomAccessFile;
         }
 
+        /// <summary>
+        /// Gets a record from a given position.
+        /// Returns null if no record is found at the position.
+        /// </summary>
+        /// <param name="position">Position to seek the record</param>
+        /// <returns></returns>
         public override VideoGameSalesRecord ReadPosition(int position)
         {
             if (position >= TotalRecords)
@@ -38,6 +50,11 @@ namespace VideoGameSales
             return record;
         }
 
+        /// <summary>
+        /// Writes a single <see cref="VideoGameSalesRecord" /> object to the file on a given position.
+        /// </summary>
+        /// <param name="position">Position to write the record on</param>
+        /// <param name="record">Record to be written</param>
         public override void Write(int position, VideoGameSalesRecord record)
         {
             SeekFromBegin(position);
