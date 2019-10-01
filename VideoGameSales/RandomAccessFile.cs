@@ -6,21 +6,26 @@ using System.Text;
 
 namespace VideoGameSales
 {
-    public class RandomAccessFile
+    public abstract class RandomAccessFile<T>
     {
+        // Constants
+        private const int HeadSize = SizeOf.Int32;
+
+        // Properties
         public int TotalRecords { get; private set; }
 
-        int recordSize = (SizeOf.Int32 * 2) + (SizeOf.String * 4) + (SizeOf.Double * 5);
-        const int headSize = SizeOf.Int32;
+        // Fields
+        private int currentPosition = 0;
 
-        FileStream file;
-        BinaryReader reader;
-        BinaryWriter writer;
+        private readonly int recordSize;
+        protected readonly FileStream file;
+        protected readonly BinaryReader reader;
+        protected readonly BinaryWriter writer;
 
-        private RandomAccessFile() { }
-
-        private RandomAccessFile(string path)
+        protected RandomAccessFile(string path, int recordSize)
         {
+            this.recordSize = recordSize;
+
             bool isNewFile = !File.Exists(path);
 
             file = File.Open(path, FileMode.OpenOrCreate);
@@ -38,77 +43,6 @@ namespace VideoGameSales
             }
         }
 
-        public static RandomAccessFile Open(string path)
-        {
-            return new RandomAccessFile(path);
-        }
-
-
-        public void Write(VideoGameSalesRecord record)
-        {
-            var position = TotalRecords * recordSize + headSize;
-
-            file.Seek(position, SeekOrigin.Begin);
-
-            writer.Write(record.Rank);
-
-            writer.Write(record.Name);
-            file.Seek(SizeOf.String - record.Name.Length, SeekOrigin.Current);
-
-            writer.Write(record.Genre);
-            file.Seek(SizeOf.String - record.Genre.Length, SeekOrigin.Current);
-
-            writer.Write(record.Platform);
-            file.Seek(SizeOf.String - record.Platform.Length, SeekOrigin.Current);
-
-            writer.Write(record.Publisher);
-            file.Seek(SizeOf.String - record.Publisher.Length, SeekOrigin.Current);
-
-            writer.Write(record.Year);
-            writer.Write(record.NASales);
-            writer.Write(record.JPSales);
-            writer.Write(record.EUSales);
-            writer.Write(record.GlobalSales);
-
-            file.Seek(0, SeekOrigin.Begin);
-            writer.Write(++TotalRecords);
-        }
-
-        public VideoGameSalesRecord ReadPosition(int index)
-        {
-            if (index >= TotalRecords)
-            {
-                return default;
-            }
-
-            var position = index * recordSize + headSize;
-
-            file.Seek(position, SeekOrigin.Begin);
-
-            var record = new VideoGameSalesRecord();
-
-            record.Rank = reader.ReadInt32();
-
-            record.Name = reader.ReadString();
-            file.Seek(SizeOf.String - record.Name.Length, SeekOrigin.Current);
-
-            record.Genre = reader.ReadString();
-            file.Seek(SizeOf.String - record.Genre.Length, SeekOrigin.Current);
-
-            record.Platform = reader.ReadString();
-            file.Seek(SizeOf.String - record.Platform.Length, SeekOrigin.Current);
-
-            record.Publisher = reader.ReadString();
-            file.Seek(SizeOf.String - record.Publisher.Length, SeekOrigin.Current);
-
-            record.Year = reader.ReadInt32();
-            record.NASales = reader.ReadDouble();
-            record.JPSales = reader.ReadDouble();
-            record.EUSales = reader.ReadDouble();
-            record.GlobalSales = reader.ReadDouble();
-            return record;
-        }
-
         public void Close()
         {
             file.Close();
@@ -124,5 +58,55 @@ namespace VideoGameSales
             TotalRecords = 0;
             writer.Write(TotalRecords);
         }
+
+        protected int GetPosition(int position)
+        {
+            return position * recordSize + HeadSize;
+        }
+
+        protected string ReadString(int limit)
+        {
+            string str = reader.ReadString();
+            file.Seek(limit - str.Length, SeekOrigin.Current);
+            return str;
+        }
+
+        protected void WriteString(string str, int limit)
+        {
+            var length = str?.Length ?? 0;
+
+            writer.Write(str ?? "");
+
+            file.Seek(SizeOf.String - length, SeekOrigin.Current);
+        }
+
+        public T Read()
+        {
+            T record = ReadPosition(currentPosition);
+
+            if (record != null)
+            {
+                currentPosition++;
+            }
+            else
+            {
+                currentPosition = 0;
+            }
+
+            return record;
+        }
+
+        public void Append(T record)
+        {
+            // Getting end position
+            var position = GetPosition(TotalRecords);
+            Write(position, record);
+            file.Seek(0, SeekOrigin.Begin);
+            writer.Write(++TotalRecords);
+        }
+
+        public abstract T ReadPosition(int position);
+
+        public abstract void Write(int pos, T obj);
     }
 }
