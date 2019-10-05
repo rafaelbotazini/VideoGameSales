@@ -1,11 +1,16 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace VideoGameSales
 {
     public class FileUtil
     {
+        public static string InvertedIndexFilePath = "invertedIndex.bin";
+        public static string WordIndexFilePath = "wordIndex.bin";
+        public static string BinaryFilePath = "vgsales.bin";
+        public static string CSVFilePath = "vgsales.csv";
 
         /// <summary>
         /// Creates a new binary file from a csv file.
@@ -19,6 +24,8 @@ namespace VideoGameSales
             using (var reader = new StreamReader(file))
             {
                 Delete(output);
+                Delete(InvertedIndexFilePath);
+                Delete(WordIndexFilePath);
 
                 string line;
 
@@ -48,6 +55,7 @@ namespace VideoGameSales
                     };
 
                     binaryFile.Append(salesRecord);
+
                     Console.Write("\r{0} records written", ++count);
                 }
 
@@ -61,9 +69,76 @@ namespace VideoGameSales
             }
         }
 
-        public static void GenerateInvertedIndexFile(string binaryFilePath, string output)
+        public static void GenerateInvertedIndex(string gameName, int recordPosition)
         {
-            throw new NotImplementedException();
+            foreach (string word in StringUtil.GetGameNameWords(gameName))
+            {
+                AddWordToInvertedIndex(word, recordPosition);
+            }
+        }
+
+        private static void AddWordToInvertedIndex(string word, int recordPosition)
+        {
+            int hash = StringUtil.GetWordHash(word);
+
+            var invertedIndexFile = InvertedIndexRandomAccessFile.Open(InvertedIndexFilePath);
+            var wordIndexFile = WordIndexRandomAccessFile.Open(WordIndexFilePath);
+
+            AddWordToInvertedIndex(word, recordPosition, invertedIndexFile, wordIndexFile, hash);
+
+            invertedIndexFile.Close();
+            wordIndexFile.Close();
+        }
+
+        private static void AddWordToInvertedIndex(string word, int recordPosition, InvertedIndexRandomAccessFile invertedIndexFile, WordIndexRandomAccessFile wordIndexFile, int hash)
+        {
+            WordIndex index = wordIndexFile.ReadPosition(hash);
+            // new word
+            if (index == null)
+            {
+                // add word to inverted index
+                invertedIndexFile.Append(new InvertedIndex
+                {
+                    Word = word,
+                    Records = new int[] { recordPosition },
+                });
+
+                // write new 
+                int positionCreated = invertedIndexFile.TotalRecords - 1;
+
+                wordIndexFile.Add(hash, new WordIndex
+                {
+                    InvertedIndexPosition = positionCreated,
+                    StringHash = hash,
+                    Next = -1
+                });
+            }
+            else
+            {
+                InvertedIndex invertedIndex = invertedIndexFile.ReadPosition(index.InvertedIndexPosition);
+
+                // word matches
+                if (word == invertedIndex.Word)
+                {
+                    if (!invertedIndex.Records.Any(r => r == recordPosition))
+                    {
+                        // update index adding new position
+                        invertedIndex.Records = invertedIndex.Records.Concat(new int[] { recordPosition });
+
+                        invertedIndexFile.Write(index.InvertedIndexPosition, invertedIndex);
+                    }
+                }
+                else
+                {
+                    if (index.Next == -1)
+                    {
+                        index.Next = wordIndexFile.TotalRecords;
+                        wordIndexFile.Write(hash, index);
+                    }
+                    // go to next
+                    AddWordToInvertedIndex(word, recordPosition, invertedIndexFile, wordIndexFile, index.Next);
+                }
+            }
         }
 
         /// <summary>
@@ -109,5 +184,9 @@ namespace VideoGameSales
             return result.ToArray();
         }
 
+        internal static void GenerateVideoGameSalesBinaryFile(object cSVFilePath, object binaryFilePath)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

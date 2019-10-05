@@ -1,17 +1,16 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 
 namespace VideoGameSales
 {
     public class InvertedIndexRandomAccessFile : RandomAccessFile<InvertedIndex>
     {
-        const int RecordListStringSize = 1024;
+        const int RecordListStringSize = 3072;
 
         private InvertedIndexRandomAccessFile(string path, int recordSize) : base(path, recordSize) { }
 
         /// <summary>
-        /// Opens a random access file with InvertedIndexRandomAccessFile records.
+        /// Opens a random access file of InvertedIndexRandomAccessFile records.
         /// If the file does not exist. It will be created.
         /// </summary>
         /// <param name="path">Path to the binary file</param>
@@ -31,7 +30,7 @@ namespace VideoGameSales
         /// <returns></returns>
         public override InvertedIndex ReadPosition(int position)
         {
-            if (position >= TotalRecords)
+            if (position >= TotalRecords || position == -1)
             {
                 return null;
             }
@@ -66,7 +65,7 @@ namespace VideoGameSales
         /// <returns></returns>
         private IEnumerable<int> SplitRecords(string records)
         {
-            string[] split = records.Split(',');
+            string[] split = records.Split(',', StringSplitOptions.RemoveEmptyEntries);
             int[] converted = Array.ConvertAll(split, int.Parse);
             return converted;
         }

@@ -14,5 +14,15 @@ namespace VideoGameSales
             double.TryParse(str, NumberStyles.Float, CultureInfo.InvariantCulture, out double result);
             return result;
         }
+
+        /// <summary>
+        /// Simple hash function
+        /// </summary>
+        /// <param name="i">Number to hash</param>
+        /// <returns></returns>
+        public static int Hash(int i)
+        {
+            return i % 11;
+        }
     }
 }

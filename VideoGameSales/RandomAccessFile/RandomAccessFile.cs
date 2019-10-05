@@ -69,8 +69,7 @@ namespace VideoGameSales
         /// </summary>
         private void InitHead()
         {
-            TotalRecords = 0;
-            writer.Write(TotalRecords);
+            UpdateHead(0);
         }
 
         /// <summary>
@@ -101,8 +100,8 @@ namespace VideoGameSales
         /// <returns></returns>
         protected string ReadString(int limit)
         {
-            string str = reader.ReadString().Substring(0, limit);
-            file.Seek(limit - str.Length, SeekOrigin.Current);
+            string str = reader.ReadString();
+            file.Seek(file.Position - str.Length + limit, SeekOrigin.Begin);
             return str;
         }
 
@@ -116,9 +115,21 @@ namespace VideoGameSales
         {
             var length = str?.Length ?? 0;
 
+            if (length > limit)
+            {
+                throw new Exception("String " + str + " truncated to " + limit + " characters.");
+            }
+
             writer.Write(str ?? "");
 
-            file.Seek(SizeOf.String - length, SeekOrigin.Current);
+            file.Seek(file.Position - length + limit, SeekOrigin.Begin);
+        }
+
+        protected void UpdateHead(int total)
+        {
+            TotalRecords = total;
+            file.Seek(0, SeekOrigin.Begin);
+            writer.Write(TotalRecords);
         }
 
         /// <summary>
@@ -149,8 +160,7 @@ namespace VideoGameSales
         public void Append(T record)
         {
             Write(TotalRecords, record);
-            file.Seek(0, SeekOrigin.Begin);
-            writer.Write(++TotalRecords);
+            UpdateHead(TotalRecords + 1);
         }
 
         /// <summary>

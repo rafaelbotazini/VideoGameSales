@@ -7,5 +7,10 @@ namespace VideoGameSales
     {
         public string Word { get; set; }
         public IEnumerable<int> Records { get; set; }
+
+        public override string ToString()
+        {
+            return $"Word: {Word}, Records: {string.Join(", ", Records)}";
+        }
     }
 }
