@@ -22,7 +22,7 @@ namespace VideoGameSales
         /// <returns></returns>
         public static int Hash(int i)
         {
-            return i % 11;
+            return i % 3571;
         }
     }
 }
